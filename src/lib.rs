@@ -5,6 +5,7 @@ extern crate xml;
 // use std::io::{self, Write};
 // use std::io::prelude::*;
 use std::fmt;
+use std::collections::HashMap;
 
 // use xml::writer::{EmitterConfig, EventWriter, Result, XmlEvent};
 
@@ -12,40 +13,34 @@ use std::fmt;
 //     "test"
 // }
 
-enum Node {
-    nd(Elem),
-    at(Attr),
-    tx(String),
-}
-
-struct Attr {
-    name: String,
-    value: String,
-}
-
 pub struct Elem {
     name: String,
-    subs: Vec<Node>,
+    attributes: HashMap<String, String>,
+    children: Vec<Sub>,
+}
+
+pub enum Sub {
+    Node(Elem),
+    Text(String),
 }
 
 impl Elem {
     pub fn to_string(&self) -> String {
-        // let mut counter = 0;
-
         let mut body = String::new();
-        let mut attr = String::new();
-        for sub in self.subs.iter() {
-            match sub {
-                &Node::nd(ref elem) => {
+        for child in self.children.iter() {
+            match child {
+                &Sub::Node(ref elem) => {
                     fmt::write(&mut body, format_args!("{}", elem.to_string())).unwrap()
                 }
-                &Node::tx(ref elem) => {
+                &Sub::Text(ref elem) => {
                     fmt::write(&mut body, format_args!("{}", elem.to_string())).unwrap()
-                }
-                &Node::at(ref elem) => {
-                    fmt::write(&mut attr, format_args!("{}=\"{}\"", elem.name, elem.value)).unwrap()
                 }
             }
+        }
+
+        let mut attr = String::new();
+        for (attr_name, attr_val) in &self.attributes {
+            fmt::write(&mut attr, format_args!("{}=\"{}\" ", attr_name, attr_val)).unwrap();
         }
         format!(
             "<{tag}{attr}>{body}</{tag}>",
@@ -53,6 +48,14 @@ impl Elem {
             attr = attr,
             body = body
         )
+    }
+
+    pub fn from_string(input: String) -> Elem {
+        Elem {
+            name: String::from(""),
+            attributes: HashMap::new(),
+            children: Vec::new(),
+        }
     }
 }
 
@@ -166,37 +169,45 @@ html
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashMap;
 
     #[test]
     fn test_node_struct() {
         let doc = Elem {
             name: String::from("tag"),
-            subs: vec![Node::tx(String::from("heres some text"))],
+            children: vec![Sub::Text(String::from("heres some Text"))],
+            attributes: HashMap::new(),
         };
-        assert_eq!("<tag>heres some text</tag>", doc.to_string());
+        assert_eq!("<tag>heres some Text</tag>", doc.to_string());
 
         let doc = Elem {
             name: String::from("html"),
-            subs: vec![
-                Node::nd(Elem {
+            attributes: HashMap::new(),
+            children: vec![
+                Sub::Node(Elem {
                     name: String::from("head"),
-                    subs: vec![
-                        Node::nd(Elem {
+                    attributes: HashMap::new(),
+                    children: vec![
+                        Sub::Node(Elem {
                             name: String::from("title"),
-                            subs: vec![Node::tx(String::from("Stuff"))],
+                            children: vec![Sub::Text(String::from("Stuff"))],
+                            attributes: HashMap::new(),
                         }),
                     ],
                 }),
-                Node::nd(Elem {
+                Sub::Node(Elem {
                     name: String::from("body"),
-                    subs: vec![
-                        Node::nd(Elem {
+                    attributes: HashMap::new(),
+                    children: vec![
+                        Sub::Node(Elem {
                             name: String::from("p"),
-                            subs: vec![Node::tx(String::from("First paragraph."))],
+                            children: vec![Sub::Text(String::from("First paragraph."))],
+                            attributes: HashMap::new(),
                         }),
-                        Node::nd(Elem {
+                        Sub::Node(Elem {
                             name: String::from("p"),
-                            subs: vec![Node::tx(String::from("Second paragraph."))],
+                            children: vec![Sub::Text(String::from("Second paragraph."))],
+                            attributes: HashMap::new(),
                         }),
                     ],
                 }),
@@ -206,5 +217,13 @@ mod tests {
             "<html><head><title>Stuff</title></head><body><p>First paragraph.</p><p>Second paragraph.</p></body></html>",
             doc.to_string()
         );
+    }
+
+    #[test]
+    fn test_from_string() {
+        assert_eq!(
+            "<html><head><title>Stuff</title></head><body><p>First paragraph.</p><p>Second paragraph.</p></body></html>",
+            Elem::from_string(String::from(sample_small)).to_string()
+        )
     }
 }
