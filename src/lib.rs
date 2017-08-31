@@ -1,17 +1,6 @@
-extern crate xml;
 
-// use std::fs;
-// use std::fs::File;
-// use std::io::{self, Write};
-// use std::io::prelude::*;
 use std::fmt;
 use std::collections::HashMap;
-
-// use xml::writer::{EmitterConfig, EventWriter, Result, XmlEvent};
-
-// fn get_inner(input: &str) -> &str {
-//     "test"
-// }
 
 pub struct Elem {
     name: String,
@@ -26,17 +15,28 @@ pub enum Sub {
 
 impl Elem {
     pub fn to_string(&self) -> String {
-        let mut body = String::new();
-        for child in self.children.iter() {
-            match child {
+        let body: String = self
+            .children
+            .iter()
+            .fold(String::from(""), |joined, new| format!("{}{}", joined, match new {
                 &Sub::Node(ref elem) => {
-                    fmt::write(&mut body, format_args!("{}", elem.to_string())).unwrap()
+                    elem.to_string()
                 }
                 &Sub::Text(ref elem) => {
-                    fmt::write(&mut body, format_args!("{}", elem.to_string())).unwrap()
+                    elem.to_string()
                 }
-            }
-        }
+            }));
+        //let mut body = String::new();
+        //for child in self.children.iter() {
+            //match child {
+                //&Sub::Node(ref elem) => {
+                    //fmt::write(&mut body, format_args!("{}", elem.to_string())).unwrap()
+                //}
+                //&Sub::Text(ref elem) => {
+                    //fmt::write(&mut body, format_args!("{}", elem.to_string())).unwrap()
+                //}
+            //}
+        //}
 
         let mut attr = String::new();
         for (attr_name, attr_val) in &self.attributes {

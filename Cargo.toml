@@ -4,4 +4,4 @@ version = "0.1.0"
 authors = ["Simon Gordon <gordonsimon@hotmail.com>"]
 
 [dependencies]
-xml-rs = "0.6"
+#xml-rs = "0.6"
