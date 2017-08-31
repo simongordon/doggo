@@ -30,29 +30,29 @@ pub struct Elem {
 
 impl Elem {
     pub fn to_string(&self) -> String {
-        let mut output = String::new();
-        fmt::write(&mut output, format_args!("<{}>", self.name)).unwrap();
         // let mut counter = 0;
-        for sub in self.subs.iter() {
-            // fmt::write(&mut output, format_args!("{}", counter)).unwrap();
-            // counter += 1;
-            // let sub: Node = sub.unwrap;
-            fmt::write(
-                &mut output,
-                format_args!(
-                    "{}",
-                    match sub {
-                        &Node::nd(ref elem) => elem.to_string(),
-                        // &Node::at(ref elem) => elem.to_string(),
-                        &Node::tx(ref txt) => txt.to_string(),
-                        _ => String::from(""),
-                    }
-                ),
-            ).unwrap();
-        }
-        fmt::write(&mut output, format_args!("</{}>", self.name)).unwrap();
 
-        output
+        let mut body = String::new();
+        let mut attr = String::new();
+        for sub in self.subs.iter() {
+            match sub {
+                &Node::nd(ref elem) => {
+                    fmt::write(&mut body, format_args!("{}", elem.to_string())).unwrap()
+                }
+                &Node::tx(ref elem) => {
+                    fmt::write(&mut body, format_args!("{}", elem.to_string())).unwrap()
+                }
+                &Node::at(ref elem) => {
+                    fmt::write(&mut attr, format_args!("{}=\"{}\"", elem.name, elem.value)).unwrap()
+                }
+            }
+        }
+        format!(
+            "<{tag}{attr}>{body}</{tag}>",
+            tag = self.name,
+            attr = attr,
+            body = body
+        )
     }
 }
 
@@ -156,7 +156,7 @@ impl Elem {
 
 
 #[cfg(test)]
-const memeage: &str = r#"
+const sample_small: &str = r#"
 html
     head
     body
@@ -166,17 +166,6 @@ html
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    // #[ignore]
-    // #[test]
-    // fn compile_text_simple() {
-    //     // assert_eq!("<html />", compile_text("html"));
-    //     // assert_eq!("<memes />", compile_text("memes"));
-    //     assert_eq!(
-    //         "<html><head /><body><p>henlo</p></body></html>",
-    //         compile_text(memeage)
-    //     );
-    // }
 
     #[test]
     fn test_node_struct() {

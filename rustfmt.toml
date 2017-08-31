@@ -1,0 +1,2 @@
+control_brace_style = "ClosingNextLine"
+error_on_line_overflow = false
