@@ -1,11 +1,12 @@
 
-use std::fmt;
-use std::collections::HashMap;
+//use std::fmt;
+//use std::collections::HashMap;
 
 
 pub enum Sub {
     Node(Elem),
     Text(String),
+    Comment(String),
 }
 
 pub struct Elem {
@@ -18,47 +19,29 @@ pub struct Elem {
 
 impl Elem {
     pub fn to_string(&self) -> String {
-        let body: String = self
-            .children
-            .iter()
-            .fold(String::from(""), |joined, new| format!("{}{}", joined, match new {
-                &Sub::Node(ref elem) => {
-                    elem.to_string()
-                }
-                &Sub::Text(ref elem) => {
-                    elem.to_string()
-                }
-            }));
-        //let mut body = String::new();
-        //for child in self.children.iter() {
-            //match child {
-                //&Sub::Node(ref elem) => {
-                    //fmt::write(&mut body, format_args!("{}", elem.to_string())).unwrap()
-                //}
-                //&Sub::Text(ref elem) => {
-                    //fmt::write(&mut body, format_args!("{}", elem.to_string())).unwrap()
-                //}
-            //}
-        //}
-
-        let mut attr = String::new();
-        for &(ref attr_name, ref attr_val) in &self.attributes {
-            fmt::write(&mut attr, format_args!("{}=\"{}\" ", attr_name, attr_val)).unwrap();
-            //fmt::write(&mut attr, format_args!("{}=""{}"" ", attr_name, attr_val)).unwrap();
-        }
-
-        let attr: String = self
-            .attributes
-            .iter()
-            .fold(String::from(""), |joined, &(ref new_name, ref new_val)| format!("{} {}=\"{}\"", joined, new_name, new_val));
-
         format!(
             "<{tag}{attr}>{body}</{tag}>",
             tag = self.name,
-            attr = attr,
-            body = body
+            attr = self.attributes.iter().fold(String::from(""), |joined,
+             &(ref new_name,
+               ref new_val)| {
+                format!("{} {}=\"{}\"", joined, new_name, new_val)
+            }),
+            body = self.children.iter().fold(String::from(""), |joined, new| {
+                format!(
+                    "{}{}",
+                    joined,
+                    match new
+                    {
+                        &Sub::Node(ref elem) => elem.to_string(),
+                        &Sub::Text(ref inner_text) => inner_text.to_string(),
+                        &Sub::Comment(ref inner_text) => {
+                            format!("<!---{}--->", inner_text.to_string())
+                        }
+                    }
+                )
+            })
         )
-        //String::from("a")
     }
 
     pub fn from_string(input: String) -> Elem {
@@ -171,7 +154,7 @@ impl Elem {
 
 
 #[cfg(test)]
-const sample_small: &str = r#"
+const SAMPLE_SMALL: &str = r#"
 html
     head
     body
@@ -181,7 +164,7 @@ html
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::HashMap;
+    //use std::collections::HashMap;
 
     #[test]
     fn test_node_struct() {
@@ -221,7 +204,7 @@ mod tests {
                             children: vec![Sub::Text(String::from("First paragraph."))],
                             //attributes: HashMap::new(),
                             //attributes: Vec::new(),
-                            attributes: vec![(String::from("class"), String::from("memes"))]
+                            attributes: vec![(String::from("class"), String::from("memes"))],
                         }),
                         Sub::Node(Elem {
                             name: String::from("p"),
@@ -243,7 +226,7 @@ mod tests {
     fn test_from_string() {
         assert_eq!(
             "<html><head><title>Stuff</title></head><body><p>First paragraph.</p><p>Second paragraph.</p></body></html>",
-            Elem::from_string(String::from(sample_small)).to_string()
+            Elem::from_string(String::from(SAMPLE_SMALL)).to_string()
         )
     }
 }
