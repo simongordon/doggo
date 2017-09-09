@@ -2,16 +2,19 @@
 use std::fmt;
 use std::collections::HashMap;
 
-pub struct Elem {
-    name: String,
-    attributes: HashMap<String, String>,
-    children: Vec<Sub>,
-}
 
 pub enum Sub {
     Node(Elem),
     Text(String),
 }
+
+pub struct Elem {
+    name: String,
+    //attributes: HashMap<String, String>,
+    attributes: Vec<(String, String)>,
+    children: Vec<Sub>,
+}
+
 
 impl Elem {
     pub fn to_string(&self) -> String {
@@ -39,21 +42,30 @@ impl Elem {
         //}
 
         let mut attr = String::new();
-        for (attr_name, attr_val) in &self.attributes {
+        for &(ref attr_name, ref attr_val) in &self.attributes {
             fmt::write(&mut attr, format_args!("{}=\"{}\" ", attr_name, attr_val)).unwrap();
+            //fmt::write(&mut attr, format_args!("{}=""{}"" ", attr_name, attr_val)).unwrap();
         }
+
+        let attr: String = self
+            .attributes
+            .iter()
+            .fold(String::from(""), |joined, &(ref new_name, ref new_val)| format!("{} {}=\"{}\"", joined, new_name, new_val));
+
         format!(
             "<{tag}{attr}>{body}</{tag}>",
             tag = self.name,
             attr = attr,
             body = body
         )
+        //String::from("a")
     }
 
     pub fn from_string(input: String) -> Elem {
         Elem {
             name: String::from(""),
-            attributes: HashMap::new(),
+            //attributes: HashMap::new(),
+            attributes: Vec::new(),
             children: Vec::new(),
         }
     }
@@ -176,45 +188,53 @@ mod tests {
         let doc = Elem {
             name: String::from("tag"),
             children: vec![Sub::Text(String::from("heres some Text"))],
-            attributes: HashMap::new(),
+            //attributes: HashMap::new(),
+            attributes: Vec::new(),
         };
         assert_eq!("<tag>heres some Text</tag>", doc.to_string());
 
         let doc = Elem {
             name: String::from("html"),
-            attributes: HashMap::new(),
+            //attributes: HashMap::new(),
+            attributes: Vec::new(),
             children: vec![
                 Sub::Node(Elem {
                     name: String::from("head"),
-                    attributes: HashMap::new(),
+                    //attributes: HashMap::new(),
+                    attributes: Vec::new(),
                     children: vec![
                         Sub::Node(Elem {
                             name: String::from("title"),
                             children: vec![Sub::Text(String::from("Stuff"))],
-                            attributes: HashMap::new(),
+                            //attributes: HashMap::new(),
+                            attributes: Vec::new(),
                         }),
                     ],
                 }),
                 Sub::Node(Elem {
                     name: String::from("body"),
-                    attributes: HashMap::new(),
+                    //attributes: HashMap::new(),
+                    attributes: Vec::new(),
                     children: vec![
                         Sub::Node(Elem {
                             name: String::from("p"),
                             children: vec![Sub::Text(String::from("First paragraph."))],
-                            attributes: HashMap::new(),
+                            //attributes: HashMap::new(),
+                            //attributes: Vec::new(),
+                            attributes: vec![(String::from("class"), String::from("memes"))]
                         }),
                         Sub::Node(Elem {
                             name: String::from("p"),
                             children: vec![Sub::Text(String::from("Second paragraph."))],
-                            attributes: HashMap::new(),
+                            //attributes: HashMap::new(),
+                            attributes: Vec::new(),
                         }),
                     ],
                 }),
             ],
         };
         assert_eq!(
-            "<html><head><title>Stuff</title></head><body><p>First paragraph.</p><p>Second paragraph.</p></body></html>",
+            "<html><head><title>Stuff</title></head><body><p class=\"memes\">First paragraph.</p><p>Second paragraph.</p></body></html>",
             doc.to_string()
         );
     }
